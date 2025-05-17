@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vue Habit Tracker</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <style>
+    :root { font-family: system-ui; }
+    .completed { opacity: 0.5; text-decoration: line-through; }
+    button { transition: all 0.2s; cursor: pointer; }
+    .habit-list { margin: 20px 0; }
+    .habit-item { display: flex; align-items: center; gap: 10px; margin: 5px 0; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <h1>Habit Tracker</h1>
+    
+    <div class="habit-form">
+      <input 
+        type="text" 
+        v-model="newHabit" 
+        @keyup.enter="addHabit"
+        placeholder="Add new habit"
+      >
+      <button @click="addHabit">Add</button>
+    </div>
+
+    <div class="filters">
+      <button
+        v-for="type in ['all', 'active', 'completed']"
+        :key="type"
+        @click="filter = type"
+        :class="{ active: filter === type }"
+      >
+        {{ type }}
+      </button>
+    </div>
+
+    <div class="habit-list">
+      <div 
+        v-for="habit in filteredHabits" 
+        :key="habit.id" 
+        class="habit-item"
+      >
+        <input 
+          type="checkbox" 
+          :checked="habit.completed" 
+          @change="toggleHabit(habit.id)"
+        >
+        <span :class="{ completed: habit.completed }">
+          {{ habit.text }} (Streak: {{ habit.streak }})
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    const { createApp, ref, computed } = Vue;
+
+    createApp({
+      setup() {
+        // REACTIVE STATE
+        const newHabit = ref('');
+        const habits = ref([]);
+        const filter = ref('all');
+
+        // COMPUTED PROPERTY
+        const filteredHabits = computed(() => {
+          return habits.value.filter(habit => {
+            if (filter.value === 'completed') return habit.completed;
+            if (filter.value === 'active') return !habit.completed;
+            return true;
+          });
+        });
+
+        // FUNCTIONS
+        const addHabit = () => {
+          if (newHabit.value.trim()) {
+            habits.value.push({
+              id: Date.now(),
+              text: newHabit.value,
+              completed: false,
+              streak: 0
+            });
+            newHabit.value = '';
+  6        }
+        };
+
+        const toggleHabit = (id) => {
+          const habit = habits.value.find(h => h.id === id);
+          habit.completed = !habit.completed;
+          habit.streak = habit.completed ? habit.streak + 1 : 0;
+        };
+
+        return {
+          newHabit,
+          habits,
+          filter,
+          filteredHabits,
+          addHabit,
+          toggleHabit
+        };
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>
